@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // A rating change must come with a new history entry for that match, and is capped at 64 points.
+    function validRatingChange(uid, before, games, wins) {
+      let d = request.resource.data;
+      let h = getAfter(/databases/$(database)/documents/users/$(uid)/history/$(d.lastMatch)).data;
+      return d.keys().hasOnly(['name', 'rating', 'games', 'wins', 'lastMatch', 'updatedAt'])
+        && d.name is string && d.name.size() <= 60
+        && d.rating is int && d.rating - before <= 64 && before - d.rating <= 64
+        && d.games == games + 1 && (d.wins == wins || d.wins == wins + 1)
+        && !exists(/databases/$(database)/documents/users/$(uid)/history/$(d.lastMatch))
+        && existsAfter(/databases/$(database)/documents/users/$(uid)/history/$(d.lastMatch))
+        && h.before == before && h.delta == d.rating - before;
+    }
+
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid && validRatingChange(uid, 1200, 0, 0);
+      allow update: if signedIn() && request.auth.uid == uid
+        && validRatingChange(uid, resource.data.rating, resource.data.games, resource.data.wins);
+
+      match /history/{matchId} {
+        allow read: if true;
+        allow create: if signedIn() && request.auth.uid == uid
+          && request.resource.data.result in ['win', 'loss', 'draw']
+          && request.resource.data.delta is int;
+      }
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'waiting'
+        && request.resource.data.moves.size() == 0
+        && request.resource.data.seats.size() == 2
+        && request.auth.uid in request.resource.data.seats;
+
+      // Second player takes the empty seat.
+      allow update: if signedIn()
+        && resource.data.status == 'waiting'
+        && !(request.auth.uid in resource.data.seats)
+        && changed().hasOnly(['seats', 'names', 'ratings', 'status', 'turnUid', 'updatedAt'])
+        && request.resource.data.status == 'playing'
+        && request.resource.data.seats.size() == 2
+        && request.auth.uid in request.resource.data.seats
+        && resource.data.createdBy in request.resource.data.seats
+        && request.resource.data.turnUid in request.resource.data.seats;
+
+      // The player to move appends exactly one move.
+      allow update: if signedIn()
+        && resource.data.status == 'playing'
+        && resource.data.turnUid == request.auth.uid
+        && changed().hasOnly(['moves', 'turnUid', 'status', 'updatedAt'])
+        && request.resource.data.moves.size() == resource.data.moves.size() + 1
+        && (resource.data.moves.size() == 0
+          || request.resource.data.moves[0:resource.data.moves.size()] == resource.data.moves)
+        && ((request.resource.data.status == 'playing' && request.resource.data.turnUid in resource.data.seats)
+          || (request.resource.data.status == 'done' && request.resource.data.turnUid == null));
+
+      // Either player may resign while the game is running.
+      allow update: if signedIn()
+        && resource.data.status == 'playing'
+        && changed().hasOnly(['status', 'turnUid', 'resigned', 'updatedAt'])
+        && request.resource.data.status == 'done'
+        && request.resource.data.resigned in [0, 1]
+        && resource.data.seats[request.resource.data.resigned] == request.auth.uid;
+    }
+  }
+}
