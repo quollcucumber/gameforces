@@ -19,7 +19,9 @@ export default function GamePage({ game, user, profile }) {
   const [justMastered, setJustMastered] = useState(false)
   const recorded = useRef(null)
   const streaks = useStreaks(user)
-  const mine = streaks[game.id] || { streak: 0, mastered: false }
+  // Streaks and mastery are per game and size tier.
+  const streakId = (t) => `${game.id}:${t}`
+  const mine = streaks[streakId(tier)] || { streak: 0, mastered: false }
 
   const s = g && g.s
   const outcome = g && (g.resigned ? null : terminalValue(game, s))
@@ -55,8 +57,9 @@ export default function GamePage({ game, user, profile }) {
   useEffect(() => {
     if (!over || recorded.current === g.seed) return
     recorded.current = g.seed
-    setJustMastered(recordBotStreak(user, game.id, result).justMastered)
-    recordResult(user, { id: `bot-${g.seed}`, gameId: game.id, opponent: 'bot', oppRating: botRating(game, g.tier), result })
+    const masteredBefore = !!streaks[streakId(g.tier)]?.mastered
+    setJustMastered(recordBotStreak(user, streakId(g.tier), result).justMastered)
+    recordResult(user, { id: `bot-${g.seed}`, gameId: game.id, opponent: 'bot', oppRating: botRating(game, g.tier), result, noGain: masteredBefore })
       .then(setDelta)
       .catch((e) => console.error(e))
   })
@@ -114,20 +117,20 @@ export default function GamePage({ game, user, profile }) {
         <span className="muted">
           Win streak vs bot: {mine.streak}
           {mine.mastered ? ' (mastered)' : ` / ${MASTERY_STREAK}`} ·
-          vs bot: win +{ratingDelta(r, oppRating, 1, n)}, lose {ratingDelta(r, oppRating, 0, n, true)}
+          vs bot: win +{mine.mastered ? 0 : ratingDelta(r, oppRating, 1, n)}, lose {ratingDelta(r, oppRating, 0, n, true)}
         </span>
       </div>
 
       {mine.mastered && (!g || over) && (
         <div className={`mastery${justMastered ? ' fresh' : ''}`}>
           {justMastered ? (
-            <b>{MASTERY_STREAK} wins in a row against the perfect bot. You've mastered {game.title}, so you can stop now.</b>
+            <b>{MASTERY_STREAK} wins in a row against the perfect bot. You've mastered {game.title} at this size, so you can stop now. Further wins here give no rating.</b>
           ) : (
-            <b>You've mastered {game.title}.</b>
+            <b>You've mastered {game.title} at this size, so wins here no longer raise your rating.</b>
           )}{' '}
           Try something harder:{' '}
           <a href="#/">pick a higher-rated problem</a>
-          {tier < 2 && ' or switch to a bigger tier'}.
+          {tier < maxTier(game) && ' or switch to a bigger tier'}.
         </div>
       )}
 

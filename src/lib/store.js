@@ -73,10 +73,11 @@ export function useProfile(user) {
 }
 
 // Records a finished game and returns the rating change. `id` makes the update idempotent per match.
-export async function recordResult(user, { id, gameId, opponent, oppRating, result }) {
+// noGain: the player has mastered this game against the bot, so a win no longer adds rating.
+export async function recordResult(user, { id, gameId, opponent, oppRating, result, noGain = false }) {
   if (!user) {
     const p = readGuest()
-    const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games, opponent === 'bot')
+    const delta = Math.min(noGain ? 0 : Infinity, ratingDelta(p.rating, oppRating, scoreOf(result), p.games, opponent === 'bot'))
     const next = { ...p, rating: p.rating + delta, games: p.games + 1, wins: p.wins + (result === 'win' ? 1 : 0) }
     localStorage.setItem(LOCAL_KEY, JSON.stringify(next))
     localStorage.setItem(LOCAL_HISTORY, JSON.stringify([...readGuestHistory(), { gameId, opponent, oppRating, result, delta, before: p.rating, at: Date.now() }]))
@@ -89,7 +90,7 @@ export async function recordResult(user, { id, gameId, opponent, oppRating, resu
     const [u, h] = [await tx.get(userRef), await tx.get(histRef)]
     if (h.exists()) return h.data().delta
     const p = u.exists() ? u.data() : emptyProfile(user.displayName || 'Player')
-    const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games, opponent === 'bot')
+    const delta = Math.min(noGain ? 0 : Infinity, ratingDelta(p.rating, oppRating, scoreOf(result), p.games, opponent === 'bot'))
     tx.set(histRef, { gameId, opponent, oppRating, result, delta, before: p.rating, at: serverTimestamp() })
     tx.set(userRef, {
       name: p.name || user.displayName || 'Player',
@@ -217,12 +218,12 @@ function readStreaks(user) {
   }
 }
 
-export function recordBotStreak(user, gameId, result) {
+export function recordBotStreak(user, streakId, result) {
   const all = readStreaks(user)
-  const cur = all[gameId] || { streak: 0, mastered: false }
+  const cur = all[streakId] || { streak: 0, mastered: false }
   const streak = result === 'win' ? cur.streak + 1 : 0
   const next = { streak, mastered: cur.mastered || streak >= MASTERY_STREAK, justMastered: !cur.mastered && streak >= MASTERY_STREAK }
-  all[gameId] = { streak: next.streak, mastered: next.mastered }
+  all[streakId] = { streak: next.streak, mastered: next.mastered }
   localStorage.setItem(streakKey(user), JSON.stringify(all))
   window.dispatchEvent(new Event('gameforces-streaks'))
   return next
