@@ -1,5 +1,7 @@
 import { firebaseConfigured } from '../lib/firebase.js'
+import { rankOf } from '../lib/rank.js'
 import { useLeaderboard } from '../lib/store.js'
+import Handle from './Handle.jsx'
 
 export default function Leaderboard({ user }) {
   const rows = useLeaderboard()
@@ -17,6 +19,7 @@ export default function Leaderboard({ user }) {
             <tr>
               <th>#</th>
               <th>Player</th>
+              <th>Rank</th>
               <th>Rating</th>
               <th>Games</th>
               <th>Wins</th>
@@ -26,9 +29,12 @@ export default function Leaderboard({ user }) {
             {rows.map((r, i) => (
               <tr key={r.uid} className={user && user.uid === r.uid ? 'mine' : ''}>
                 <td>{i + 1}</td>
-                <td>{r.name}</td>
                 <td>
-                  <b>{r.rating}</b>
+                  <Handle name={r.name} rating={r.rating} uid={r.uid} />
+                </td>
+                <td className={rankOf(r.rating).cls}>{rankOf(r.rating).title}</td>
+                <td>
+                  <b className={rankOf(r.rating).cls}>{r.rating}</b>
                 </td>
                 <td>{r.games}</td>
                 <td>{r.wins}</td>

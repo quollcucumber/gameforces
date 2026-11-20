@@ -104,7 +104,7 @@ export default function MatchPage({ id, user, profile }) {
         </div>
       )}
 
-      <Table game={game} state={rep.s} names={names.map((n, i) => `${n}${m.ratings[i] !== null ? ` (${m.ratings[i]})` : ''}`)} mySeat={mySeat} turn={turn}>
+      <Table game={game} state={rep.s} names={names} ratings={m.ratings} uids={m.seats} mySeat={mySeat} turn={turn}>
         {game.kind === 'score' && (
           <p className="goal">
             With perfect play, {game.scoreLabel || 'the score'} ends at {fmtValue(game, m.value, rep.s)}. Beat that to win; match it to draw.

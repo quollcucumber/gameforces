@@ -10,6 +10,7 @@ import { START_RATING, ratingDelta, scoreOf } from '../engine/elo.js'
 import { auth, db, firebaseConfigured, googleProvider } from './firebase.js'
 
 const LOCAL_KEY = 'gameforces.guest'
+const LOCAL_HISTORY = 'gameforces.guestHistory'
 
 // The signed-in account, verified or not. `undefined` while loading.
 export function useAuth() {
@@ -78,6 +79,7 @@ export async function recordResult(user, { id, gameId, opponent, oppRating, resu
     const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games)
     const next = { ...p, rating: p.rating + delta, games: p.games + 1, wins: p.wins + (result === 'win' ? 1 : 0) }
     localStorage.setItem(LOCAL_KEY, JSON.stringify(next))
+    localStorage.setItem(LOCAL_HISTORY, JSON.stringify([...readGuestHistory(), { gameId, opponent, oppRating, result, delta, before: p.rating, at: Date.now() }]))
     window.dispatchEvent(new Event('gameforces-guest'))
     return delta
   }
@@ -99,6 +101,42 @@ export async function recordResult(user, { id, gameId, opponent, oppRating, resu
     })
     return delta
   })
+}
+
+function readGuestHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_HISTORY) || '[]')
+  } catch {
+    return []
+  }
+}
+
+// Rated games in order. `uid === null` means the guest in this browser.
+export function useHistory(uid) {
+  const [rows, setRows] = useState(undefined)
+  useEffect(() => {
+    if (uid === null || !firebaseConfigured) {
+      const h = () => setRows(readGuestHistory())
+      h()
+      window.addEventListener('gameforces-guest', h)
+      return () => window.removeEventListener('gameforces-guest', h)
+    }
+    return onSnapshot(
+      query(collection(db, 'users', uid, 'history'), orderBy('at')),
+      (snap) => setRows(snap.docs.map((d) => d.data())),
+      () => setRows([]),
+    )
+  }, [uid])
+  return rows
+}
+
+export function useUserDoc(uid) {
+  const [p, setP] = useState(undefined)
+  useEffect(() => {
+    if (!uid || !firebaseConfigured) return
+    return onSnapshot(doc(db, 'users', uid), (snap) => setP(snap.exists() ? snap.data() : null), () => setP(null))
+  }, [uid])
+  return p
 }
 
 export function useLeaderboard() {

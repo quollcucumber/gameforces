@@ -38,7 +38,7 @@ input, select { font: inherit; background: var(--panel); color: var(--text); bor
 .top nav { display: flex; gap: 1rem; }
 .top nav a { color: var(--muted); }
 .me { margin-left: auto; display: flex; gap: 0.8rem; align-items: center; }
-.rating b { color: var(--gold); }
+.rating b:not([class]) { color: var(--gold); }
 footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1.5rem; border-top: 1px solid var(--line); }
 
 .hero { margin-bottom: 1.5rem; }
@@ -128,3 +128,12 @@ footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1
 .auth .tabs button { flex: 1; }
 .auth .or { text-align: center; color: var(--muted); margin: 1rem 0 0; }
 .auth .row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+
+.handle { font-weight: 700; }
+.handle.legendary::first-letter { color: var(--text); }
+.chart { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin: 0.8rem 0 1.2rem; }
+.chart .line { fill: none; stroke: var(--gold); stroke-width: 2; }
+.chart .pt { fill: var(--gold); stroke: #0d1117; stroke-width: 1; }
+.chart .tick { fill: var(--muted); font-size: 11px; text-anchor: end; }
+.up { color: #3fb950; } .down { color: var(--bad); }
+.rating a.handle:hover { text-decoration: underline; }
