@@ -5,7 +5,8 @@ Play the game theory problems from Codeforces against a perfect bot or a friend,
 - **60 games** from the Codeforces `games` tag, each linked to its problem (`src/games/`).
 - **Perfect bot:** every position is small enough to solve exactly (memoised minimax, or retrograde analysis for games with cycles). Against the bot you always get the winning side, so any mistake loses.
 - **Friends:** "Challenge a friend" creates a match and a `#/match/<id>` link. Moves sync live through Firestore, and each client replays and checks every move.
-- **Rating:** Elo with K = 64 for the first 10 games and 32 after that, capped at ±64 per game. The bot's rating is the problem's Codeforces rating −300 / +0 / +300 for the Easy / Medium / Hard size tier. Friend games use both players' ratings.
+- **Rating:** Elo with K = 64 for the first 10 games and 32 after that, capped at ±64 per game. The bot's rating is the problem's Codeforces rating −300 / +0 / +300 / +600 / +900 for the Easy / Medium / Hard / Expert / Insane size tier. A loss to the bot always costs at least 16 points. Friend games use both players' ratings.
+- **Bigger tiers:** Expert and Insane only appear for games whose solver handles bigger positions. `node scripts/measure-tiers.mjs` finds each game's largest size level and writes `src/games/tiers.js`; re-run it after adding or resizing a game.
 
 Without Firebase config the app still works: bot games are rated locally in the browser, and friend matches and the leaderboard are hidden.
 
@@ -31,7 +32,7 @@ To use Firebase, copy `.env.example` to `.env.local` and fill in a web app confi
 
 ## Adding a game
 
-Add an object to one of `src/games/batch*.js` with `id`, `cf` (contest, index, name, rating), `roles`, `kind` (`win` or `score`), `rules`, `generate(rng, tier)`, `turn`, `moves`, `apply`, `label` and `board`. Optional: `terminal`/`outcome`, `key` (memo key for equivalent states), `cyclic`, `solverMoves`, `validate`. Add a view for the board in `src/components/views.js`, or leave it out to get a generic view. `npm test` checks the new game automatically.
+Add an object to one of `src/games/batch*.js` with `id`, `cf` (contest, index, name, rating), `roles`, `kind` (`win` or `score`), `rules`, `generate(rng, tier)`, `turn`, `moves`, `apply`, `label` and `board`. Optional: `wins(s)` (whether the player to move wins, e.g. by Sprague-Grundy, so big positions skip the search), `terminal`/`outcome`, `key` (memo key for equivalent states), `cyclic`, `solverMoves`, `validate`. Add a view for the board in `src/components/views.js`, or leave it out to get a generic view. `npm test` checks the new game automatically.
 
 ## Limits
 

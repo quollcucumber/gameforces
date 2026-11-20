@@ -3,7 +3,7 @@ import { ratingDelta } from '../engine/elo.js'
 import { randomSeed } from '../engine/rng.js'
 import { TIERS, botRating, makePosition, resultFor, winningSeat } from '../engine/setup.js'
 import { botMove, terminalValue } from '../engine/solver.js'
-import { cfUrl } from '../games/index.js'
+import { cfUrl, maxTier } from '../games/index.js'
 import { firebaseConfigured } from '../lib/firebase.js'
 import { go } from '../lib/route.js'
 import { MASTERY_STREAK, createMatch, recordBotStreak, recordResult, useStreaks } from '../lib/store.js'
@@ -34,7 +34,7 @@ export default function GamePage({ game, user, profile }) {
     setJustMastered(false)
     const seed = randomSeed()
     const p = await later(() => makePosition(game, tier, seed))
-    setG({ seed, tier, value: p.value, solver: p.solver, seat: winningSeat(game, p.value), s: p.state, history: [], resigned: false })
+    setG({ seed, tier: p.tier, value: p.value, solver: p.solver, seat: winningSeat(game, p.value), s: p.state, history: [], resigned: false })
     setBusy(false)
   }
 
@@ -66,7 +66,7 @@ export default function GamePage({ game, user, profile }) {
     try {
       const seed = randomSeed()
       const p = await later(() => makePosition(game, tier, seed))
-      const id = await createMatch(user, profile, { gameId: game.id, tier, seed, seat: Math.random() < 0.5 ? 0 : 1, init: p.state, value: p.value })
+      const id = await createMatch(user, profile, { gameId: game.id, tier: p.tier, seed, seat: Math.random() < 0.5 ? 0 : 1, init: p.state, value: p.value })
       go(`/match/${id}`)
     } catch (e) {
       alert(e.message)
@@ -91,7 +91,7 @@ export default function GamePage({ game, user, profile }) {
 
       <div className="controls">
         <div className="tiers">
-          {TIERS.map((t) => (
+          {TIERS.filter((t) => t.id <= maxTier(game)).map((t) => (
             <button key={t.id} className={tier === t.id ? 'on' : 'ghost'} onClick={() => setTier(t.id)} disabled={busy || (g && !over)}>
               {t.name}
               <small>bot {botRating(game, t.id)}</small>
@@ -114,7 +114,7 @@ export default function GamePage({ game, user, profile }) {
         <span className="muted">
           Win streak vs bot: {mine.streak}
           {mine.mastered ? ' (mastered)' : ` / ${MASTERY_STREAK}`} ·
-          vs bot: win +{ratingDelta(r, oppRating, 1, n)}, lose {ratingDelta(r, oppRating, 0, n)}
+          vs bot: win +{ratingDelta(r, oppRating, 1, n)}, lose {ratingDelta(r, oppRating, 0, n, true)}
         </span>
       </div>
 

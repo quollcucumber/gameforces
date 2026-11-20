@@ -19,11 +19,12 @@ export function terminalValue(game, s) {
   return null
 }
 
-export function makeSolver(game, limit = 400000) {
-  return game.cyclic ? makeRetrogradeSolver(game, limit) : makeMinimaxSolver(game, limit)
+// `deadline` (a Date.now() value) aborts long solves with TooBig too, so the page never freezes for long.
+export function makeSolver(game, limit = 400000, deadline = Infinity) {
+  return game.cyclic ? makeRetrogradeSolver(game, limit, deadline) : makeMinimaxSolver(game, limit, deadline)
 }
 
-function makeMinimaxSolver(game, limit) {
+function makeMinimaxSolver(game, limit, deadline) {
   const memo = new Map()
   const key = game.key || ((s) => JSON.stringify(s))
   function value(s) {
@@ -31,6 +32,7 @@ function makeMinimaxSolver(game, limit) {
     const hit = memo.get(k)
     if (hit !== undefined) return hit
     let v = terminalValue(game, s)
+    if (v === null && game.wins) v = game.wins(s) === (game.turn(s) === 0) ? 1 : -1
     if (v === null) {
       const maxim = game.turn(s) === 0
       v = maxim ? -Infinity : Infinity
@@ -40,7 +42,7 @@ function makeMinimaxSolver(game, limit) {
       }
     }
     memo.set(k, v)
-    if (memo.size > limit) throw new TooBig()
+    if (memo.size > limit || ((memo.size & 4095) === 0 && Date.now() > deadline)) throw new TooBig()
     return v
   }
   function analyse(s) {
@@ -95,7 +97,7 @@ export function bestValue(turn, values) {
 
 // Win/lose games whose state graph has cycles: retrograde analysis over the reachable states.
 // Positions that neither side can force are draws (0). depth = plies to the end under optimal play.
-function makeRetrogradeSolver(game, limit) {
+function makeRetrogradeSolver(game, limit, deadline) {
   const key = game.key || ((s) => JSON.stringify(s))
   const info = new Map()
   function build(root) {
@@ -123,7 +125,7 @@ function makeRetrogradeSolver(game, limit) {
           cn = { state: c, parents: [], value: null, depth: 0, left: 0 }
           info.set(ck, cn)
           stack.push(c)
-          if (info.size > limit) throw new TooBig()
+          if (info.size > limit || ((info.size & 4095) === 0 && Date.now() > deadline)) throw new TooBig()
         }
         cn.parents.push(k)
       }

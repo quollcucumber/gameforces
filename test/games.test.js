@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
-import { GAMES } from '../src/games/index.js'
+import { GAMES, maxTier } from '../src/games/index.js'
 import { makePosition, winningSeat, resultFor } from '../src/engine/setup.js'
 import { botMove, terminalValue } from '../src/engine/solver.js'
 import { makeRng } from '../src/engine/rng.js'
@@ -9,11 +9,12 @@ import { makeRng } from '../src/engine/rng.js'
 for (const g of GAMES) {
   test(`${g.id} positions are solvable and bots reach the game value`, () => {
     const ids = new Set()
-    for (const tier of [0, 1, 2]) {
-      for (const seed of [1, 2, 3]) {
+    for (let tier = 0; tier <= maxTier(g); tier++) {
+      for (const seed of tier > 2 ? [1] : [1, 2, 3]) {
         const t0 = Date.now()
         const { state, value, solver } = makePosition(g, tier, seed * 7919 + tier)
-        assert.ok(Date.now() - t0 < 4000, `${g.id} tier ${tier} too slow`)
+        assert.ok(Date.now() - t0 < (tier > 2 ? 8000 : 4000), `${g.id} tier ${tier} too slow`)
+        assert.strictEqual(makePosition(g, tier, seed * 7919 + tier).tier, tier, `${g.id} fell back from tier ${tier}`)
         if (g.kind === 'win') assert.notStrictEqual(value, 0)
         ids.add(JSON.stringify(state))
         let s = state

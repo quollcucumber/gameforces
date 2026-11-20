@@ -76,7 +76,7 @@ export function useProfile(user) {
 export async function recordResult(user, { id, gameId, opponent, oppRating, result }) {
   if (!user) {
     const p = readGuest()
-    const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games)
+    const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games, opponent === 'bot')
     const next = { ...p, rating: p.rating + delta, games: p.games + 1, wins: p.wins + (result === 'win' ? 1 : 0) }
     localStorage.setItem(LOCAL_KEY, JSON.stringify(next))
     localStorage.setItem(LOCAL_HISTORY, JSON.stringify([...readGuestHistory(), { gameId, opponent, oppRating, result, delta, before: p.rating, at: Date.now() }]))
@@ -89,7 +89,7 @@ export async function recordResult(user, { id, gameId, opponent, oppRating, resu
     const [u, h] = [await tx.get(userRef), await tx.get(histRef)]
     if (h.exists()) return h.data().delta
     const p = u.exists() ? u.data() : emptyProfile(user.displayName || 'Player')
-    const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games)
+    const delta = ratingDelta(p.rating, oppRating, scoreOf(result), p.games, opponent === 'bot')
     tx.set(histRef, { gameId, opponent, oppRating, result, delta, before: p.rating, at: serverTimestamp() })
     tx.set(userRef, {
       name: p.name || user.displayName || 'Player',
