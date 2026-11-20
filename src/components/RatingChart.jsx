@@ -7,14 +7,17 @@ const PAD = { l: 44, r: 12, t: 10, b: 24 }
 
 // Rating after each game, with Codeforces rank bands behind the line.
 export default function RatingChart({ history }) {
-  const pts = [START_RATING, ...history.map((h) => h.before + h.delta)]
+  // History is public user-written data, so keep it to a sane range before it sizes the axes.
+  const clamp = (r) => (Number.isFinite(r) ? Math.min(5000, Math.max(-1000, r)) : START_RATING)
+  const pts = [history.length ? history[0].before : START_RATING, ...history.map((h) => h.before + h.delta)].map(clamp)
   const lo = Math.floor((Math.min(...pts) - 150) / 100) * 100
   const hi = Math.ceil((Math.max(...pts) + 150) / 100) * 100
   const x = (i) => PAD.l + ((W - PAD.l - PAD.r) * i) / Math.max(1, pts.length - 1)
   const y = (r) => PAD.t + ((H - PAD.t - PAD.b) * (hi - r)) / (hi - lo)
   const bands = RANKS.map((rk, i) => [Math.max(lo, rk.min), Math.min(hi, i + 1 < RANKS.length ? RANKS[i + 1].min : hi), rk]).filter(([a, b]) => a < b)
   const ticks = []
-  for (let r = lo; r <= hi; r += hi - lo > 1000 ? 200 : 100) ticks.push(r)
+  const step = Math.max(100, Math.ceil((hi - lo) / 1200) * 100)
+  for (let r = lo; r <= hi; r += step) ticks.push(r)
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} width="100%">
       {bands.map(([a, b, rk]) => (

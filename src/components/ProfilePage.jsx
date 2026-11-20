@@ -4,15 +4,15 @@ import { useHistory, useUserDoc } from '../lib/store.js'
 import Handle from './Handle.jsx'
 import RatingChart from './RatingChart.jsx'
 
-export default function ProfilePage({ uid, profile }) {
+export default function ProfilePage({ uid, profile, user }) {
   const isGuest = uid === 'guest'
   const doc = useUserDoc(isGuest ? null : uid)
-  const p = isGuest ? profile : doc
+  const p = isGuest ? (user ? null : profile) : doc
   const history = useHistory(isGuest ? null : uid)
   if (p === undefined || history === undefined) return <p className="muted">Loading…</p>
   if (!p) return <p className="muted">No rated games for this player yet.</p>
   const rank = rankOf(p.rating)
-  const best = Math.max(p.rating, ...history.map((h) => h.before + h.delta))
+  const best = Math.max(p.rating, ...history.map((h) => Math.max(h.before, h.before + h.delta)))
   return (
     <div className="narrow profile">
       <h1>
