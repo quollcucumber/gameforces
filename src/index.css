@@ -120,3 +120,11 @@ footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1
 .mastered { color: #0d1117; background: var(--gold); font-weight: 700; border-radius: 6px; padding: 0.05rem 0.4rem; margin-right: 0.4rem; font-size: 0.75rem; }
 .mastery { margin: 0.8rem 0; padding: 0.7rem 1rem; border: 1px solid var(--gold); border-radius: 8px; background: #3d320040; }
 .mastery.fresh { box-shadow: 0 0 0 2px var(--gold); }
+
+.verify-pill { color: var(--gold); border: 1px solid var(--gold); border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.85rem; }
+.auth { max-width: 420px; margin: 1rem auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.4rem; }
+.auth form { display: flex; flex-direction: column; gap: 0.6rem; }
+.auth .tabs { display: flex; gap: 0.3rem; margin: 1rem 0 0.8rem; }
+.auth .tabs button { flex: 1; }
+.auth .or { text-align: center; color: var(--muted); margin: 1rem 0 0; }
+.auth .row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }

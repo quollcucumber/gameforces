@@ -3,7 +3,8 @@ import { resultFor } from '../engine/setup.js'
 import { terminalValue } from '../engine/solver.js'
 import { GAME_BY_ID, cfUrl } from '../games/index.js'
 import { firebaseConfigured } from '../lib/firebase.js'
-import { joinMatch, pushMove, recordResult, resignMatch, signIn, useMatch } from '../lib/store.js'
+import { go } from '../lib/route.js'
+import { joinMatch, pushMove, recordResult, resignMatch, useMatch } from '../lib/store.js'
 import { History, Moves, Result, Table, fmtValue } from './Play.jsx'
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
@@ -98,7 +99,7 @@ export default function MatchPage({ id, user, profile }) {
               Join as {game.roles[m.seats[0] ? 1 : 0]} (vs {m.names.find(Boolean)}, {m.ratings.find((x) => x !== null)})
             </button>
           ) : (
-            <button onClick={() => signIn().catch((e) => alert(e.message))}>Sign in with Google to join</button>
+            <button onClick={() => go('/signin')}>Sign in to join</button>
           )}
         </div>
       )}

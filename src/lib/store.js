@@ -1,4 +1,7 @@
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword, onIdTokenChanged, sendEmailVerification, sendPasswordResetEmail,
+  signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile,
+} from 'firebase/auth'
 import {
   addDoc, collection, doc, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, updateDoc,
 } from 'firebase/firestore'
@@ -8,20 +11,38 @@ import { auth, db, firebaseConfigured, googleProvider } from './firebase.js'
 
 const LOCAL_KEY = 'gameforces.guest'
 
+// The signed-in account, verified or not. `undefined` while loading.
 export function useAuth() {
-  const [user, setUser] = useState(undefined)
+  const [state, setState] = useState({ user: undefined })
   useEffect(() => {
     if (!firebaseConfigured) {
-      setUser(null)
+      setState({ user: null })
       return
     }
-    return onAuthStateChanged(auth, (u) => setUser(u))
+    // A fresh object each time, so refreshing emailVerified re-renders.
+    return onIdTokenChanged(auth, (u) => setState({ user: u }))
   }, [])
-  return user
+  return state.user
 }
+
+const verifyLink = () => ({ url: `${location.origin}${location.pathname}#/signin` })
 
 export const signIn = () => signInWithPopup(auth, googleProvider)
 export const signOutUser = () => signOut(auth)
+export const signInEmail = (email, password) => signInWithEmailAndPassword(auth, email, password)
+export async function signUpEmail(email, password, name) {
+  const { user } = await createUserWithEmailAndPassword(auth, email, password)
+  await updateProfile(user, { displayName: name })
+  await sendEmailVerification(user, verifyLink())
+}
+export const resendVerification = () => sendEmailVerification(auth.currentUser, verifyLink())
+export const resetPassword = (email) => sendPasswordResetEmail(auth, email)
+// Reloads the account and forces a new ID token so Firestore sees email_verified.
+export async function refreshVerification() {
+  await auth.currentUser.reload()
+  await auth.currentUser.getIdToken(true)
+  return auth.currentUser.emailVerified
+}
 
 const emptyProfile = (name) => ({ name, rating: START_RATING, games: 0, wins: 0 })
 
