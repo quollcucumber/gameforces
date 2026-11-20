@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { GAMES } from '../games/index.js'
 import { firebaseConfigured } from '../lib/firebase.js'
+import { useStreaks } from '../lib/store.js'
 
 const band = (r) => (r < 1200 ? 'gray' : r < 1400 ? 'green' : r < 1600 ? 'cyan' : r < 1900 ? 'blue' : r < 2100 ? 'violet' : r < 2400 ? 'orange' : 'red')
 
 export default function Lobby({ user }) {
   const [q, setQ] = useState('')
   const [sort, setSort] = useState('rating')
+  const streaks = useStreaks(user)
   const list = useMemo(() => {
     const f = GAMES.filter((g) => `${g.title} ${g.cf.contest}${g.cf.index} ${g.cf.name}`.toLowerCase().includes(q.toLowerCase()))
     if (sort === 'rating-desc') return f.slice().reverse()
@@ -45,6 +47,7 @@ export default function Lobby({ user }) {
             <div className="card-top">
               <span className={`cf-rating ${band(g.cf.rating)}`}>{g.cf.rating}</span>
               <span className="muted">
+                {streaks[g.id]?.mastered && <span className="mastered">Mastered</span>}
                 {g.cf.contest}
                 {g.cf.index}
               </span>

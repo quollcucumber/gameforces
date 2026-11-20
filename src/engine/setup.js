@@ -39,11 +39,11 @@ export function winningSeat(game, value, rng = Math.random) {
   return rng() < 0.5 ? 0 : 1
 }
 
-// Result for `seat`. Score games have no natural winner: the side that beats the game value wins and an
+// Result for `seat`. Against the bot the human always has a forced win, so a draw counts as a loss. Score games have no natural winner: the side that beats the game value wins and an
 // exact match is a draw, except against the (perfect) bot where matching the value is a win.
 export function resultFor(game, seat, outcome, value, vsBot = false) {
   if (game.kind === 'win') {
-    if (outcome === 0) return 'draw'
+    if (outcome === 0) return vsBot ? 'loss' : 'draw'
     return (outcome > 0) === (seat === 0) ? 'win' : 'loss'
   }
   const diff = seat === 0 ? outcome - value : value - outcome

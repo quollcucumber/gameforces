@@ -116,3 +116,7 @@ footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1
 .lb th, .lb td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--line); }
 .lb tr.mine { background: #2f81f71a; }
 @media (max-width: 600px) { .history { columns: 1; } }
+
+.mastered { color: #0d1117; background: var(--gold); font-weight: 700; border-radius: 6px; padding: 0.05rem 0.4rem; margin-right: 0.4rem; font-size: 0.75rem; }
+.mastery { margin: 0.8rem 0; padding: 0.7rem 1rem; border: 1px solid var(--gold); border-radius: 8px; background: #3d320040; }
+.mastery.fresh { box-shadow: 0 0 0 2px var(--gold); }
