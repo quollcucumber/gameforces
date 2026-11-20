@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "preview": "vite preview",
     "test:rules": "firebase emulators:exec --only firestore --project gameforces-test 'node --test test-rules/'"
   },
