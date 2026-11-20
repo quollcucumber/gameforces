@@ -14,6 +14,12 @@ export const mex = (arr) => {
   while (st.has(m)) m++
   return m
 }
-export const tier3 = (tier, a, b, c) => [a, b, c][tier]
+// Size parameter for a tier. Tiers above Hard keep growing by the Hard - Medium step; values that don't grow
+// (decreasing numbers, fractions, strings) stay at the Hard value.
+const grow = (b, c, k) => (Number.isInteger(c) && Number.isInteger(b) && c >= b ? c + k * Math.max(1, c - b) : c)
+export const tier3 = (tier, a, b, c) => {
+  if (tier <= 2) return [a, b, c][tier]
+  return Array.isArray(c) ? c.map((x, i) => grow(b[i], x, tier - 2)) : grow(b, c, tier - 2)
+}
 export const cf = (contest, index, name, rating) => ({ contest, index, name, rating })
 export const winnerSign = (seat) => (seat === 0 ? 1 : -1)

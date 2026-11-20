@@ -8,7 +8,35 @@ const v = (label, value) => ({ label, value: String(value) })
 const range = (n) => Array.from({ length: n }, (_, i) => i)
 const bits = (mask, n) => range(n).filter((i) => (mask >> i) & 1)
 
+const ATTACK_NAMES = ['free', 'after infantry', 'after cavalry']
+const treeGraph = (parent, extra = {}) => ({ graph: { n: parent.length, edges: parent.flatMap((p, v) => (p < 0 ? [] : [[p, v]])), layout: 'tree', ...extra } })
+
 export const VIEWS = {
+  stringSet: (s) => [t('Strings', s.w.length ? s.w : ['—'])],
+  thanosSnap: (s) => [t('Array', s.a), v('Rounds left', s.r), v('Next', s.ph === 0 ? 'Alice may swap' : 'Bob erases a half')],
+  nim2: (s) => [v('Heaps', `${s.x} and ${s.y}`), t('Shortcuts (x, y)', s.sc.map(([a, b]) => `${a},${b}`))],
+  arrayGame: (s) => [t('b', s.b, { hl: [s.x] }), v('m', s.m)],
+  gelly: (s) => [
+    t('a', s.a, { hl: [s.i] }),
+    t('b', s.b, { hl: [s.i] }),
+    t('Chooses (F Flower, G Gellyfish)', [...s.c].map((ch) => (ch === '1' ? 'F' : 'G')), { hl: [s.i] }),
+    v('x', `${s.x} (binary ${s.x.toString(2)})`),
+  ],
+  kansas: (s) => [
+    { graph: { n: s.n, edges: s.edges.map(([a, b, w]) => [a, b, String(w)]), hl: range(s.n).filter((c) => s.own[c] === 0), hl2: range(s.n).filter((c) => s.own[c] === 1), layout: 'circle' } },
+    t('City values', s.p),
+    v('Tavas lives in / Nafas lives in', `${s.st + 1} / ${s.nt + 1}`),
+    v('Claimed', 'gold = Tavas, blue = Nafas'),
+    v("Tavas − Nafas", s.sc),
+  ],
+  bitGame: (s) => [t('Stones x', s.x), t('Limit a', s.a), t('x in binary', s.x.map((x) => x.toString(2)))],
+  treeWalk: (s) => [
+    { graph: { n: s.n, edges: s.edges, layout: 'tree', hl: s.vis.filter((_, i) => i % 2 === 0), hl2: s.vis.filter((_, i) => i % 2 === 1) } },
+    v('Alice is on / Bob is on', `${s.pos[0] + 1} / ${s.pos[1] + 1}`),
+  ],
+  christmas: (s) => [treeGraph(s.parent), t('Presents on node 1, 2, …', s.a), t('Depth', s.depth), v('k', s.k)],
+  redKingdom: (s) => [t('Defenders', s.a), t('Last attack', s.a.map((_, i) => ATTACK_NAMES[s.last ? s.last[i] : 0])), v('x / y / z', s.xyz.join(' / '))],
+
   integers: (s) => [v('n', s.n), v('Moves made', `${s.k} / 10`)],
   subtract: (s) => [v('n', s.n), ...(s.ab ? [v('Allowed', s.ab.join(' or '))] : [])],
   strip: (s) => [t('Strip', range(s.n + 1).map((i) => (i === s.n ? '●' : i)), { hl: [s.n] }), v('k', s.k)],

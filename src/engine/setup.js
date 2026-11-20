@@ -5,20 +5,25 @@ export const TIERS = [
   { id: 0, name: 'Easy', offset: -300 },
   { id: 1, name: 'Medium', offset: 0 },
   { id: 2, name: 'Hard', offset: 300 },
+  { id: 3, name: 'Expert', offset: 600 },
+  { id: 4, name: 'Insane', offset: 900 },
 ]
+// Expert and Insane use bigger per-game size levels (game.levels, measured by scripts/measure-tiers.mjs).
+const levelOf = (game, t) => (t <= 2 ? t : game.levels[t - 3])
 
 export function botRating(game, tier) {
   return Math.max(400, (game.cf.rating || 1500) + TIERS[tier].offset)
 }
 
-// Generates a solved position. With seat === 'winning' the human gets a side that can force the outcome.
-export function makePosition(game, tier, seed) {
+// Generates a solved position, falling back to smaller tiers if the requested size is too big to solve.
+// `tier` in the result is the tier actually generated.
+export function makePosition(game, tier, seed, attempts = 200) {
   const rng = makeRng(seed)
-  for (let attempt = 0; attempt < 200; attempt++) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
     const t = attempt < 120 ? tier : Math.max(0, tier - 1 - Math.floor((attempt - 120) / 40))
-    const state = game.generate(rng, t)
+    const state = game.generate(rng, levelOf(game, t))
     if (terminalValue(game, state) !== null) continue
-    const solver = makeSolver(game)
+    const solver = t > 2 ? makeSolver(game, 2500000, Date.now() + 2500) : makeSolver(game)
     let value
     try {
       value = solver.value(state)
@@ -28,7 +33,7 @@ export function makePosition(game, tier, seed) {
     }
     if (game.kind === 'win' && value === 0) continue
     if (game.validate && !game.validate(state, value)) continue
-    return { state, value, solver }
+    return { state, value, solver, tier: t }
   }
   throw new Error(`Could not generate a position for ${game.id}`)
 }
