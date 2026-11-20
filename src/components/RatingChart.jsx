@@ -7,7 +7,7 @@ const PAD = { l: 44, r: 12, t: 10, b: 24 }
 
 // Rating after each game, with Codeforces rank bands behind the line.
 export default function RatingChart({ history }) {
-  const pts = [START_RATING, ...history.map((h) => h.before + h.delta)]
+  const pts = [history.length ? history[0].before : START_RATING, ...history.map((h) => h.before + h.delta)]
   const lo = Math.floor((Math.min(...pts) - 150) / 100) * 100
   const hi = Math.ceil((Math.max(...pts) + 150) / 100) * 100
   const x = (i) => PAD.l + ((W - PAD.l - PAD.r) * i) / Math.max(1, pts.length - 1)
