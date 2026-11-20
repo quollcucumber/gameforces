@@ -145,3 +145,38 @@ export async function pushMove(match, move, nextTurnUid, done) {
 export async function resignMatch(match, seat) {
   await updateDoc(doc(db, 'matches', match.id), { status: 'done', turnUid: null, resigned: seat, updatedAt: serverTimestamp() })
 }
+
+// Consecutive wins against the bot per game, kept in this browser. Friend matches do not count.
+export const MASTERY_STREAK = 10
+const streakKey = (user) => `gameforces.streaks.${user ? user.uid : 'guest'}`
+
+function readStreaks(user) {
+  try {
+    return JSON.parse(localStorage.getItem(streakKey(user)) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+export function recordBotStreak(user, gameId, result) {
+  const all = readStreaks(user)
+  const cur = all[gameId] || { streak: 0, mastered: false }
+  const streak = result === 'win' ? cur.streak + 1 : 0
+  const next = { streak, mastered: cur.mastered || streak >= MASTERY_STREAK, justMastered: !cur.mastered && streak >= MASTERY_STREAK }
+  all[gameId] = { streak: next.streak, mastered: next.mastered }
+  localStorage.setItem(streakKey(user), JSON.stringify(all))
+  window.dispatchEvent(new Event('gameforces-streaks'))
+  return next
+}
+
+export function useStreaks(user) {
+  const [all, setAll] = useState({})
+  useEffect(() => {
+    if (user === undefined) return
+    const h = () => setAll(readStreaks(user))
+    h()
+    window.addEventListener('gameforces-streaks', h)
+    return () => window.removeEventListener('gameforces-streaks', h)
+  }, [user])
+  return all
+}

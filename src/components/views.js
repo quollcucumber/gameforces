@@ -70,4 +70,19 @@ export const VIEWS = {
     v('Marbles (Max / Lucas)', `${s.p[0] + 1} / ${s.p[1] + 1}`),
     v('Last letter', s.last),
   ],
+  chipPiles: (s, g) => [t('Piles', s.a), v(`a (${g.roles[0]}) / b (${g.roles[1]})`, s.ab.join(' / '))],
+  election: (s) => [{ graph: { n: s.n, edges: s.edges, layout: 'circle', directed: true } }, t('Taxes by city', s.h)],
+  tricolore: (s) => {
+    const lo = Math.min(...s.rows.map((r) => r[0]))
+    const hi = Math.max(...s.rows.map((r) => r[2]))
+    const grid = s.rows.map(([b, w, r]) => range(hi - lo + 1).map((i) => (i + lo === b ? 'B' : i + lo === w ? 'W' : i + lo === r ? 'R' : '')))
+    return [{ grid, label: 'Rows (B blue, W white, R red)' }, v('Forbidden k', s.f)]
+  },
+  treeTacToe: (s) => [
+    { graph: { n: s.n, edges: s.edges, hl: range(s.n).filter((i) => s.col[i] === 'W'), hl2: range(s.n).filter((i) => s.col[i] === 'B'), layout: 'tree' } },
+    v('Colours', 'gold = White, blue = Black'),
+  ],
+  carrots: (s) => [t('Carrots', s.a), v("Oleg's extra moves left", s.k)],
+  xorBreak: (s) => (s.pair ? [t('Pick one to break next', s.pair)] : [v('Number to break', `${s.p} (binary ${s.p.toString(2)})`)]),
+  removingGraph: (s) => [t('Cycles', s.cyc.length ? s.cyc : ['—']), t('Paths', s.path.length ? s.path : ['—']), v('l … r', s.lr.join(' … '))],
 }

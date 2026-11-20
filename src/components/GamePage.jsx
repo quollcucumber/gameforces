@@ -6,7 +6,7 @@ import { botMove, terminalValue } from '../engine/solver.js'
 import { cfUrl } from '../games/index.js'
 import { firebaseConfigured } from '../lib/firebase.js'
 import { go } from '../lib/route.js'
-import { createMatch, recordResult, signIn } from '../lib/store.js'
+import { MASTERY_STREAK, createMatch, recordBotStreak, recordResult, signIn, useStreaks } from '../lib/store.js'
 import { History, Moves, Result, Table, fmtValue } from './Play.jsx'
 
 const later = (f) => new Promise((res, rej) => setTimeout(() => { try { res(f()) } catch (e) { rej(e) } }, 20))
@@ -16,7 +16,10 @@ export default function GamePage({ game, user, profile }) {
   const [g, setG] = useState(null)
   const [busy, setBusy] = useState(false)
   const [delta, setDelta] = useState(null)
+  const [justMastered, setJustMastered] = useState(false)
   const recorded = useRef(null)
+  const streaks = useStreaks(user)
+  const mine = streaks[game.id] || { streak: 0, mastered: false }
 
   const s = g && g.s
   const outcome = g && (g.resigned ? null : terminalValue(game, s))
@@ -28,6 +31,7 @@ export default function GamePage({ game, user, profile }) {
   const start = async () => {
     setBusy(true)
     setDelta(null)
+    setJustMastered(false)
     const seed = randomSeed()
     const p = await later(() => makePosition(game, tier, seed))
     setG({ seed, tier, value: p.value, solver: p.solver, seat: winningSeat(game, p.value), s: p.state, history: [], resigned: false })
@@ -51,6 +55,7 @@ export default function GamePage({ game, user, profile }) {
   useEffect(() => {
     if (!over || recorded.current === g.seed) return
     recorded.current = g.seed
+    setJustMastered(recordBotStreak(user, game.id, result).justMastered)
     recordResult(user, { id: `bot-${g.seed}`, gameId: game.id, opponent: 'bot', oppRating: botRating(game, g.tier), result })
       .then(setDelta)
       .catch((e) => console.error(e))
@@ -107,9 +112,24 @@ export default function GamePage({ game, user, profile }) {
             </button>
           ))}
         <span className="muted">
+          Win streak vs bot: {mine.streak}
+          {mine.mastered ? ' (mastered)' : ` / ${MASTERY_STREAK}`} ·
           vs bot: win +{ratingDelta(r, oppRating, 1, n)}, lose {ratingDelta(r, oppRating, 0, n)}
         </span>
       </div>
+
+      {mine.mastered && (!g || over) && (
+        <div className={`mastery${justMastered ? ' fresh' : ''}`}>
+          {justMastered ? (
+            <b>{MASTERY_STREAK} wins in a row against the perfect bot. You've mastered {game.title}, so you can stop now.</b>
+          ) : (
+            <b>You've mastered {game.title}.</b>
+          )}{' '}
+          Try something harder:{' '}
+          <a href="#/">pick a higher-rated problem</a>
+          {tier < 2 && ' or switch to a bigger tier'}.
+        </div>
+      )}
 
       {g && (
         <Table game={game} state={s} names={names} mySeat={g.seat} turn={turn}>
