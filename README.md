@@ -26,8 +26,8 @@ To use Firebase, copy `.env.example` to `.env.local` and fill in a web app confi
 
 1. Create a Firebase project and a web app, enable **Google** sign-in under Authentication, and create a Firestore database.
 2. Add the GitHub Pages domain (`<user>.github.io`) to Authentication → Settings → Authorized domains.
-3. Deploy the rules: `npx firebase deploy --only firestore --project <project-id>`.
-4. Add the six `VITE_FIREBASE_*` values as repository secrets. The Pages workflow builds with them.
+3. Deploy the rules: `npx firebase deploy --only firestore` (or paste `firestore.rules` into Firestore → Rules).
+4. Put the web app config in `.env.production` (it is public anyway, since it ships in the page).
 
 ## Adding a game
 
