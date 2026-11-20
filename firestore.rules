@@ -1,7 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
+    // Google accounts are always verified. Email accounts must click the verification link first.
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
 
     // A rating change must come with a new history entry for that match, and is capped at 64 points.

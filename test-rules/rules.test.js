@@ -13,7 +13,7 @@ before(async () => {
 after(() => env.cleanup())
 beforeEach(() => env.clearFirestore())
 
-const db = (uid) => env.authenticatedContext(uid).firestore()
+const db = (uid) => env.authenticatedContext(uid, { email_verified: true }).firestore()
 
 function rate(d, uid, id, before, delta, games = 0, wins = 0) {
   const b = writeBatch(d)
@@ -90,4 +90,11 @@ test('only the resigning player can resign for their seat', async () => {
 
 test('creator cannot fake a joined opponent', async () => {
   await assertFails(setDoc(doc(db('a'), 'matches', 'm'), { ...newMatch('a'), seats: ['a', 'b'], status: 'playing' }))
+})
+
+test('unverified email accounts cannot write', async () => {
+  const d = env.authenticatedContext('u', { email_verified: false }).firestore()
+  await assertFails(rate(d, 'u', 'bot-1', 1200, 30))
+  await assertFails(setDoc(doc(d, 'matches', 'm'), { createdBy: 'u', status: 'waiting', moves: [], seats: ['u', null] }))
+  await assertSucceeds(getDoc(doc(d, 'users', 'a')))
 })

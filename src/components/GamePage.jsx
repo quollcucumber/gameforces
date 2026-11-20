@@ -6,7 +6,7 @@ import { botMove, terminalValue } from '../engine/solver.js'
 import { cfUrl } from '../games/index.js'
 import { firebaseConfigured } from '../lib/firebase.js'
 import { go } from '../lib/route.js'
-import { MASTERY_STREAK, createMatch, recordBotStreak, recordResult, signIn, useStreaks } from '../lib/store.js'
+import { MASTERY_STREAK, createMatch, recordBotStreak, recordResult, useStreaks } from '../lib/store.js'
 import { History, Moves, Result, Table, fmtValue } from './Play.jsx'
 
 const later = (f) => new Promise((res, rej) => setTimeout(() => { try { res(f()) } catch (e) { rej(e) } }, 20))
@@ -107,7 +107,7 @@ export default function GamePage({ game, user, profile }) {
               Challenge a friend
             </button>
           ) : (
-            <button className="ghost" onClick={() => signIn().catch((e) => alert(e.message))}>
+            <button className="ghost" onClick={() => go('/signin')}>
               Sign in to challenge a friend
             </button>
           ))}
