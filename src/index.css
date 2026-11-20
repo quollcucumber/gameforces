@@ -38,7 +38,7 @@ input, select { font: inherit; background: var(--panel); color: var(--text); bor
 .top nav { display: flex; gap: 1rem; }
 .top nav a { color: var(--muted); }
 .me { margin-left: auto; display: flex; gap: 0.8rem; align-items: center; }
-.rating b { color: var(--gold); }
+.rating b:not([class]) { color: var(--gold); }
 footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1.5rem; border-top: 1px solid var(--line); }
 
 .hero { margin-bottom: 1.5rem; }
