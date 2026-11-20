@@ -47,7 +47,7 @@ export default function Lobby({ user }) {
             <div className="card-top">
               <span className={`cf-rating ${band(g.cf.rating)}`}>{g.cf.rating}</span>
               <span className="muted">
-                {streaks[g.id]?.mastered && <span className="mastered">Mastered</span>}
+                {Object.entries(streaks).some(([k, v]) => v.mastered && (k === g.id || k.startsWith(`${g.id}:`))) && <span className="mastered">Mastered</span>}
                 {g.cf.contest}
                 {g.cf.index}
               </span>
