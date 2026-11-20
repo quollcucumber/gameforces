@@ -3,8 +3,11 @@ import Leaderboard from './components/Leaderboard.jsx'
 import Lobby from './components/Lobby.jsx'
 import MatchPage from './components/MatchPage.jsx'
 import AuthPage from './components/AuthPage.jsx'
+import Handle from './components/Handle.jsx'
+import ProfilePage from './components/ProfilePage.jsx'
 import { GAME_BY_ID } from './games/index.js'
 import { firebaseConfigured } from './lib/firebase.js'
+import { rankOf } from './lib/rank.js'
 import { go, useRoute } from './lib/route.js'
 import { signOutUser, useAuth, useProfile } from './lib/store.js'
 
@@ -18,6 +21,7 @@ export default function App() {
   let page
   if (route[0] === 'game' && GAME_BY_ID[route[1]]) page = <GamePage key={route[1]} game={GAME_BY_ID[route[1]]} {...ctx} />
   else if (route[0] === 'match' && route[1]) page = <MatchPage key={route[1]} id={route[1]} {...ctx} />
+  else if (route[0] === 'user' && route[1]) page = <ProfilePage key={route[1]} uid={route[1]} {...ctx} />
   else if (route[0] === 'signin') page = <AuthPage account={account} />
   else if (route[0] === 'leaderboard') page = <Leaderboard {...ctx} />
   else page = <Lobby {...ctx} />
@@ -34,7 +38,8 @@ export default function App() {
         <div className="me">
           {profile && (
             <span className="rating" title={`${profile.games} games, ${profile.wins} wins`}>
-              {profile.name} · <b>{profile.rating}</b>
+              <Handle name={profile.name} rating={profile.rating} uid={user ? user.uid : 'guest'} /> ·{' '}
+              <b className={rankOf(profile.rating).cls}>{profile.rating}</b>
             </span>
           )}
           {firebaseConfigured && account && !user && (

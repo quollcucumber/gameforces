@@ -1,4 +1,5 @@
 import Board from './Board.jsx'
+import Handle from './Handle.jsx'
 
 export const fmtValue = (game, v, s) => (game.formatValue ? game.formatValue(v, s) : String(v))
 
@@ -29,7 +30,7 @@ export function History({ history, names, review }) {
   )
 }
 
-export function Table({ game, state, names, mySeat, turn, children }) {
+export function Table({ game, state, names, mySeat, turn, ratings, uids, children }) {
   return (
     <div className="table">
       <div className="players">
@@ -37,7 +38,13 @@ export function Table({ game, state, names, mySeat, turn, children }) {
           <div key={i} className={`player${turn === i ? ' active' : ''}`}>
             <span className="role">{game.roles[i]}</span>
             <span>
-              {names[i]}
+              {ratings && ratings[i] !== null ? (
+                <>
+                  <Handle name={names[i]} rating={ratings[i]} uid={uids && uids[i]} /> <span className="muted">({ratings[i]})</span>
+                </>
+              ) : (
+                names[i]
+              )}
               {mySeat === i ? ' (you)' : ''}
             </span>
           </div>
